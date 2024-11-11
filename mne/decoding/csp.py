@@ -799,6 +799,50 @@ def _ajd_pham(X, eps=1e-6, max_iter=15):
     D = np.reshape(A, (n_times, -1, n_times)).transpose(1, 0, 2)
     return V, D
 
+@fill_doc
+class FBCSP(CSP):
+    def __init__(
+        self,
+        bands,
+        n_components=4,
+        reg=None,
+        log=None,
+        transform_into="average_power",
+        cov_method_params=None,
+        rank=None,
+    ):
+        """Init of FBCSP."""
+        super().__init__(
+            n_components=n_components,
+            reg=reg,
+            log=log,
+            cov_est="epoch",
+            norm_trace=False,
+            transform_into=transform_into,
+            rank=rank,
+            cov_method_params=cov_method_params,
+        )
+        self.bands = bands # TODO Check bands
+
+    
+    def _filter_X(self, X):
+        filtered = []
+        iir_params = dict(ftype='cheby2', gpass=3, gstop=20, output='sos')
+        for band_range in self.bands:
+            filt_singal = X.copy().filter(l_freq=band_range[0], h_freq=band_range[1], method='iir', iir_params=iir_params)
+            filtered.append(filt_singal)
+        
+        return filtered
+    
+    def fit(self, X, y=None):
+        filtered = self._filter_X(X)
+        for i in range(len(filtered)):
+            self.csps.append(super().fit(filtered[i], y))
+        return self
+    
+    def transform(self, X):
+        filtered = self._filter_X(X)
+        
 
 @fill_doc
 class SPoC(CSP):

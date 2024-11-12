@@ -803,7 +803,9 @@ def _ajd_pham(X, eps=1e-6, max_iter=15):
 class FBCSP(CSP):
     def __init__(
         self,
-        bands,
+        bands=[[7, 12], [13, 30]],
+        gpass=3,
+        gstop=20,
         n_components=4,
         reg=None,
         log=None,
@@ -823,11 +825,13 @@ class FBCSP(CSP):
             cov_method_params=cov_method_params,
         )
         self.bands = bands # TODO Check bands
+        self.gpass = gpass
+        self.gstop = gstop
 
     
     def _filter_X(self, X):
         filtered = []
-        iir_params = dict(ftype='cheby2', gpass=3, gstop=20, output='sos')
+        iir_params = dict(ftype='cheby2', gpass=self.gpass, gstop=self.gstop, output='sos')
         for band_range in self.bands:
             filt_singal = X.copy().filter(l_freq=band_range[0], h_freq=band_range[1], method='iir', iir_params=iir_params)
             filtered.append(filt_singal)
@@ -842,6 +846,8 @@ class FBCSP(CSP):
     
     def transform(self, X):
         filtered = self._filter_X(X)
+        for i in range(len(filtered)):
+            self.csps.append(super())
         
 
 @fill_doc
